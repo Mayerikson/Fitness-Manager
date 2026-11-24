@@ -1,0 +1,19 @@
+{
+  "profile_version": 1,
+  "last_confirmed_date": "YYYY-MM-DD",
+  "sex": "",
+  "age_years": null,
+  "height_cm": null,
+  "baseline_weight_kg": null,
+  "baseline_waist_cm": null,
+  "waist_method": "",
+  "goals": [],
+  "resistance_training_days_per_week": null,
+  "running_distance_ceiling_km": 15,
+  "usual_foods": [],
+  "nutrition_targets_provisional": {
+    "kcal_per_day": null,
+    "protein_g_per_day": null
+  },
+  "notes": "Modelo sem dados pessoais. Copie para ~/.fitness-manager/profile.json e preencha localmente."
+}
