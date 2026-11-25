@@ -217,3 +217,12 @@ O projeto ainda não selecionou uma licença open source. Consulte `LICENSE-STAT
 ### UX especificada nesta versão
 
 A especificação inclui uma tela contextual de conclusão do treino, com duração baseada em registros, distinção entre exercícios concluídos/parciais/não realizados, substituições e compartilhamento opcional com dados sensíveis ocultos por padrão. O PWA ainda não foi implementado.
+
+
+## Continuidade do projeto
+
+Novo agente ou desenvolvedor?
+
+Leia primeiro o [PROJECT-HANDOFF.md](PROJECT-HANDOFF.md).
+Ele contém o contexto, as decisões arquiteturais,
+o estado atual e o roadmap do Fitness Manager.
