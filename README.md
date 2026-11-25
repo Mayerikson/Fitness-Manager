@@ -224,6 +224,6 @@ A especificação inclui uma tela contextual de conclusão do treino, com duraç
 
 Novo agente ou desenvolvedor?
 
-Leia primeiro o [PROJECT-HANDOFF.md](PROJECT-HANDOFF.md).
+Leia primeiro o [[PROJECT-HANDOFF.md](PROJECT-HANDOFF.md](https://github.com/Mayerikson/Fitness-Manager/blob/main/Fitness-Manager-PROJECT-HANDOFF.md)).
 Ele contém o contexto, as decisões arquiteturais,
 o estado atual e o roadmap do Fitness Manager.
