@@ -221,6 +221,7 @@ A especificação inclui uma tela contextual de conclusão do treino, com duraç
 
 ## Continuidade do projeto
 
+
 Novo agente ou desenvolvedor?
 
 Leia primeiro o [PROJECT-HANDOFF.md](PROJECT-HANDOFF.md).
