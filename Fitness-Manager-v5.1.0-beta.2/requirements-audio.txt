@@ -1,2 +1,0 @@
-# Optional local speech-to-text. Model weights are downloaded/cached on first use.
-faster-whisper>=1.1.0,<2.0.0
