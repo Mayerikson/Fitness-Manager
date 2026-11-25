@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Beta 1 - Personal reliability
-- Validate local SQLite history and migrations.
-- Verify backup, encryption, restore, and retention.
+- Stabilize the modular SQLite CLI and schema migration path.
+- Expand backup, encryption, restore, and retention tests.
+- Validate the first agent host end to end.
 - Validate the exercise catalog privately against the user's course files.
 - Test one supported local agent end to end.
 
@@ -21,6 +22,7 @@
 - Explainable and user-approved plan changes.
 
 ## Beta 4 - PWA
+- Apply the optional UI/UX Pro Max design intelligence and establish a project-owned design system.
 - Installable responsive web application.
 - Offline-first UI and local persistence.
 - Safe import/export and backup status.

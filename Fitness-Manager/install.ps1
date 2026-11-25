@@ -1,47 +1,43 @@
 param(
-  [switch]$ClaudeCode,
-  [switch]$QwenCode,
-  [switch]$Codex,
-  [switch]$Grok,
-  [switch]$All,
-  [string]$ProjectPath = ""
+    [switch]$ClaudeCode,
+    [switch]$Codex,
+    [switch]$QwenCode,
+    [switch]$Grok,
+    [switch]$All,
+    [string]$ProjectPath = (Get-Location).Path
 )
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Name = "fitness-manager"
-$Targets = @()
-if ($All) { $Targets = @("ClaudeCode", "QwenCode", "Codex", "Grok") }
-else {
-  if ($ClaudeCode) { $Targets += "ClaudeCode" }
-  if ($QwenCode) { $Targets += "QwenCode" }
-  if ($Codex) { $Targets += "Codex" }
-  if ($Grok) { $Targets += "Grok" }
+if ($All) { $ClaudeCode = $true; $Codex = $true; $QwenCode = $true; $Grok = $true }
+if (-not ($ClaudeCode -or $Codex -or $QwenCode -or $Grok)) {
+    throw 'Select at least one target: -ClaudeCode, -Codex, -QwenCode, -Grok or -All'
 }
-if ($Targets.Count -eq 0) { Write-Host "Use -ClaudeCode, -QwenCode, -Codex, -Grok or -All [-ProjectPath DIR]"; exit 2 }
-$Stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
-foreach ($Target in $Targets) {
-  $Base = switch ($Target) { "ClaudeCode" { ".claude/skills" } "QwenCode" { ".agents/skills" } "Codex" { ".agents/skills" } "Grok" { ".grok/skills" } }
-  $HomeBase = if ($ProjectPath) { $ProjectPath } else { $HOME }
-  $Dest = Join-Path (Join-Path $HomeBase $Base) $Name
-  $Parent = Split-Path -Parent $Dest
-  New-Item -ItemType Directory -Force -Path $Parent | Out-Null
-  $Stage = "$Dest.__staging_$Stamp"
-  $BackupRoot = Join-Path $HOME ".fitness-manager-install-backups\$Target"
-  New-Item -ItemType Directory -Force -Path $BackupRoot | Out-Null
-  $Backup = Join-Path $BackupRoot "$Name`_$Stamp"
-  try {
-    New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-    Copy-Item -Path (Join-Path $Root "*") -Destination $Stage -Recurse -Force
-    if (Test-Path $Dest) { Move-Item -Path $Dest -Destination $Backup }
-    try { Move-Item -Path $Stage -Destination $Dest }
-    catch {
-      if ((Test-Path $Backup) -and -not (Test-Path $Dest)) { Move-Item -Path $Backup -Destination $Dest }
-      throw
+
+function Install-FitnessManager([string]$Target) {
+    $Parent = Split-Path -Parent $Target
+    New-Item -ItemType Directory -Force -Path $Parent | Out-Null
+    if (Test-Path $Target) {
+        $Stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+        $Backup = "$Target.backup-$Stamp"
+        Copy-Item -Recurse -Force $Target $Backup
+        Write-Host "Existing installation backed up to: $Backup"
     }
-    Write-Host "Installed $Target -> $Dest"
-    if (Test-Path $Backup) { Write-Host "Previous installation preserved -> $Backup" }
-  } catch {
-    if (Test-Path $Stage) { Remove-Item -Recurse -Force $Stage }
-    throw
-  }
+    New-Item -ItemType Directory -Force -Path $Target | Out-Null
+    Copy-Item -Force (Join-Path $Root 'SKILL.md') (Join-Path $Target 'SKILL.md')
+    $OptionalRequirements = Join-Path $Root 'requirements-backup-encryption.txt'
+    if (Test-Path $OptionalRequirements) { Copy-Item -Force $OptionalRequirements (Join-Path $Target 'requirements-backup-encryption.txt') }
+    foreach ($Directory in @('agents','workflows','governance','references','fitness_manager','scripts','docs')) {
+        $Source = Join-Path $Root $Directory
+        if (Test-Path $Source) {
+            $Destination = Join-Path $Target $Directory
+            if (Test-Path $Destination) { Remove-Item -Recurse -Force $Destination }
+            Copy-Item -Recurse -Force $Source $Destination
+        }
+    }
+    Write-Host "Installed Fitness Manager: $Target"
 }
+
+if ($ClaudeCode) { Install-FitnessManager (Join-Path $ProjectPath '.claude/skills/fitness-manager') }
+if ($Codex) { Install-FitnessManager (Join-Path $ProjectPath '.agents/skills/fitness-manager') }
+if ($QwenCode) { Install-FitnessManager (Join-Path $ProjectPath '.qwen/skills/fitness-manager') }
+if ($Grok) { Install-FitnessManager (Join-Path $ProjectPath '.grok/skills/fitness-manager') }

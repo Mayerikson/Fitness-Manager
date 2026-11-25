@@ -1,6 +1,6 @@
 # Platform compatibility matrix
 
-Verified from public documentation consulted on 2026-11-24. A platform can change support without changing the portable core.
+Verified from public documentation consulted on 2026-11-25. A platform can change support without changing the portable core.
 
 | Host | Filesystem Skill support | Install path / condition |
 |---|---|---|
@@ -11,7 +11,7 @@ Verified from public documentation consulted on 2026-11-24. A platform can chang
 | DeepSeek model | Not a standalone Skill runtime | Use an agent host that loads SKILL.md and can execute local scripts |
 | ChatGPT | Depends on product surface | Use supported custom Skill upload or provide files/workbook in chat; normal chat does not automatically access local SQLite |
 
-The installer copies the same skill directory to each selected host's documented discovery path. Qwen and Codex share `.agents/skills/` in this package. Claude Code and Grok use their own host-specific paths.
+The installer copies the same skill directory to each selected host's documented discovery path. Qwen and Codex use their respective project-level paths in this package; Claude Code and Grok use their host-specific paths. Validate discovery in each installed host.
 
 Sources:
 - https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview

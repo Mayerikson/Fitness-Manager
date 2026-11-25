@@ -61,3 +61,7 @@ The first beta is a single user. The public repository contains no personal prof
 - Data integrity and successful backup restoration.
 - User understanding of plan changes.
 - Retention and repeated weekly use.
+
+
+## Implementation status note
+The current beta implements local data capture and basic reporting. PWA screens, multi-user capabilities, autonomous LLM agents, scheduled backups, and Supabase sync remain roadmap items. Agent Markdown files are role instructions, not executable background agents.

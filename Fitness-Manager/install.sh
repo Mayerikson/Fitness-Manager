@@ -1,47 +1,56 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-NAME="fitness-manager"
-usage(){ echo "Usage: $0 --claude|--qwen|--codex|--grok|--all [--project DIR]"; }
-TARGETS=(); PROJECT=""
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="$(pwd)"
+CLAUDE=false
+CODEX=false
+QWEN=false
+GROK=false
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --claude) TARGETS+=(claude);;
-    --qwen) TARGETS+=(qwen);;
-    --codex) TARGETS+=(codex);;
-    --grok) TARGETS+=(grok);;
-    --all) TARGETS+=(claude qwen codex grok);;
-    --project) shift; PROJECT="${1:?project directory required}";;
-    -h|--help) usage; exit 0;;
-    *) echo "Unknown option: $1"; usage; exit 2;;
+    --claude) CLAUDE=true; shift ;;
+    --codex) CODEX=true; shift ;;
+    --qwen) QWEN=true; shift ;;
+    --grok) GROK=true; shift ;;
+    --all) CLAUDE=true; CODEX=true; QWEN=true; GROK=true; shift ;;
+    --project) PROJECT_PATH="$2"; shift 2 ;;
+    -h|--help)
+      echo "Usage: bash install.sh [--claude] [--codex] [--qwen] [--grok] [--all] [--project PATH]"
+      exit 0 ;;
+    *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
-  shift
 done
-[[ ${#TARGETS[@]} -gt 0 ]] || { usage; exit 2; }
-STAMP="$(date +%Y%m%d_%H%M%S)"
-for t in "${TARGETS[@]}"; do
-  case "$t" in
-    claude) base=".claude/skills";;
-    qwen|codex) base=".agents/skills";;
-    grok) base=".grok/skills";;
-  esac
-  homebase="${PROJECT:-$HOME}"
-  dest="$homebase/$base/$NAME"
-  parent="$(dirname "$dest")"
-  mkdir -p "$parent"
-  stage="$dest.__staging_$STAMP"
-  backup_root="$HOME/.fitness-manager-install-backups/$t"
-  mkdir -p "$backup_root"
-  backup="$backup_root/${NAME}_$STAMP"
-  mkdir -p "$stage"
-  cp -a "$ROOT/." "$stage/"
-  if [[ -e "$dest" ]]; then mv "$dest" "$backup"; fi
-  if mv "$stage" "$dest"; then
-    echo "Installed $t -> $dest"
-    [[ -e "$backup" ]] && echo "Previous installation preserved -> $backup"
-  else
-    [[ -e "$backup" && ! -e "$dest" ]] && mv "$backup" "$dest"
-    rm -rf "$stage"
-    exit 1
+
+if ! $CLAUDE && ! $CODEX && ! $QWEN && ! $GROK; then
+  echo "Select at least one target: --claude, --codex, --qwen, --grok or --all" >&2
+  exit 2
+fi
+
+install_to() {
+  local target="$1"
+  mkdir -p "$(dirname "$target")"
+  if [[ -e "$target" ]]; then
+    local stamp backup
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    backup="${target}.backup-${stamp}"
+    cp -a "$target" "$backup"
+    echo "Existing installation backed up to: $backup"
   fi
-done
+  mkdir -p "$target"
+  cp "$ROOT/SKILL.md" "$target/SKILL.md"
+  if [[ -f "$ROOT/requirements-backup-encryption.txt" ]]; then cp "$ROOT/requirements-backup-encryption.txt" "$target/requirements-backup-encryption.txt"; fi
+  for dir in agents workflows governance references fitness_manager scripts docs; do
+    if [[ -d "$ROOT/$dir" ]]; then
+      rm -rf "$target/$dir"
+      cp -a "$ROOT/$dir" "$target/$dir"
+    fi
+  done
+  echo "Installed Fitness Manager: $target"
+}
+
+if $CLAUDE; then install_to "$PROJECT_PATH/.claude/skills/fitness-manager"; fi
+if $CODEX; then install_to "$PROJECT_PATH/.agents/skills/fitness-manager"; fi
+if $QWEN; then install_to "$PROJECT_PATH/.qwen/skills/fitness-manager"; fi
+if $GROK; then install_to "$PROJECT_PATH/.grok/skills/fitness-manager"; fi

@@ -27,3 +27,13 @@ python scripts/audit_release.py .
 ```
 
 These checks do not replace SAST, dependency scanning, manual review, or an authorized penetration test.
+
+## Messaging integrations
+
+- Telegram ingestion is private-chat-only and requires a numeric sender allowlist.
+- Keep the Telegram bot token in an OS secret manager or process environment; never commit it.
+- The gateway ignores unauthorized senders and does not log message bodies. Unsupported free text is not retained.
+- Parsed health records remain pending until the authorized user confirms them.
+- The optional local LLM adapter accepts loopback endpoints only; it does not silently call cloud providers.
+- Telegram is an external messaging service, so messages necessarily transit Telegram infrastructure.
+- WhatsApp/WAHA is not implemented. If added later, do not expose its API publicly; require API-key protection, sender validation, webhook authentication, and firewall restrictions.
