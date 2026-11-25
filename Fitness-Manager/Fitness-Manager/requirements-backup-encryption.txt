@@ -1,2 +1,0 @@
-# Optional: only required for AES-256-GCM encrypted cloud-sync backups.
-cryptography>=42.0.0,<47.0.0

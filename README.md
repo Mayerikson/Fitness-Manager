@@ -1,137 +1,219 @@
-Fitness Manager
-Local-first fitness tracking, model-portable guidance, and explainable progress reviews.
+# Fitness Manager
 
-Current release: 5.0.0-beta.3 — Telegram-first Data Integration Engine.
+### Seu treinamento, sua alimentação e sua evolução — organizados por dados.
 
-Fitness Manager is a personal fitness system for resistance training, nutrition, body measurements, recovery, and road running up to 15 km. It separates portable AI instructions from deterministic local data operations. The project is currently a single-user beta, not a validated multi-user product or medical device.
+**Versão:** `5.1.0-beta.5`  
+**Idioma principal:** português brasileiro  
+**Arquitetura:** local-first, model-portable  
+**Estágio:** beta pessoal, com CLI e integração opcional ao Telegram
 
-Product principles
-Local-first: personal records live in SQLite on the user's device.
-Model-portable: Markdown instructions can be loaded by compatible agent hosts; the Python data layer does not depend on an AI provider.
-Cost-conscious: local records, calculations, reports, and backups do not require paid AI APIs or a hosted database.
-Bounded workflows: only the workflow relevant to the current request is loaded.
-Explainable changes: material plan recommendations record evidence, rationale, uncertainty, approval, and review criteria.
-Safe by default: health records, private course material, credentials, and backups are excluded from the public repository.
-What is implemented now
-Portable root SKILL.md and specialist role prompts in agents/. These Markdown files are instructions, not independently running background agents.
-Bounded workflows for training, nutrition, running, measurement review, contingencies, and exercise substitutions.
-A modular Python package (fitness_manager/) and CLI wrapper (scripts/fitness_manager.py).
-SQLite schema for profile, measurements, food logs, workouts, runs, check-ins, plan decisions, and audit events.
-Append-only historical event tables; corrections are recorded as new events.
-Local SQLite online backups, SHA-256 manifests, integrity checks, pre-restore safety copies, and optional AES-256-GCM encrypted cloud-sync copies.
-Unit tests and GitHub Actions CI.
-Telegram ingestion gateway with deterministic local parsing, explicit confirmation, sender allowlisting, and idempotent SQLite persistence.
-Optional loopback-only local LLM adapter for questions; registration does not call an LLM.
-A release-hygiene audit. This is not a full SAST or penetration test.
-Optional UI/UX Pro Max design workflow and specialist prompt for future PWA work. It is not vendored or a runtime dependency.
-Quick start
-Requirements: Python 3.10 or later. Core operations use the Python standard library. Encrypted Drive-sync backups require the optional cryptography dependency.
+O Fitness Manager é um sistema pessoal para registrar e acompanhar musculação, alimentação, medidas corporais, recuperação e corrida de rua até 15 km. Os registros e cálculos básicos funcionam localmente, sem exigir conexão com uma LLM ou API paga.
 
-Initialize the local database
+> **Registrar. Confirmar. Acompanhar. Evoluir.**
+
+## Estado real do projeto
+
+### Implementado
+
+- Banco SQLite local e CLI em Python.
+- Registro e consulta de perfil, peso, medidas, alimentação, treinos, corridas e decisões de planejamento.
+- Histórico de eventos, auditoria e prevenção de duplicidade na ingestão.
+- Backup local, verificação de integridade e restauração com cópia de segurança prévia.
+- Cópia criptografada AES-256-GCM para pasta sincronizada do Google Drive, quando configurada com a dependência e senha necessárias.
+- Gateway Telegram opcional, com lista de remetentes autorizados, parser determinístico, confirmação antes de gravar e isolamento de falhas por mensagem.
+- Recebimento de áudio no Telegram e transcrição local opcional com faster-whisper; o áudio é temporário e a transcrição exige confirmação.
+- Workflows e instruções portáteis para hosts compatíveis com Agent Skills.
+- Testes automatizados e workflow de CI no GitHub Actions.
+
+### Ainda não implementado
+
+- PWA, painel web em localhost e interface mobile.
+- Aplicativos nativos Android e iOS.
+- Captura de áudio pelo navegador ou aplicativo próprio.
+- Integração WhatsApp/WAHA.
+- Motor automático de equivalência biomecânica para substituição de exercícios.
+- Agentes autônomos em execução contínua: os arquivos em `agents/` são instruções especializadas, não processos independentes.
+- Sincronização Supabase e produto multiusuário.
+
+Consulte `docs/HANDOFF.md` e `docs/ROADMAP.md` para o estado detalhado.
+
+## Princípios
+
+- **Local-first:** os dados pessoais ficam no dispositivo do usuário, em SQLite.
+- **Sem LLM para registros comuns:** parser, validação, cálculos, CLI e persistência são determinísticos.
+- **LLM opcional:** perguntas analíticas podem usar um endpoint local compatível, quando configurado.
+- **Confirmação humana:** mensagens interpretadas são apresentadas para revisão antes de criar registros de saúde.
+- **Portabilidade:** instruções em Markdown são separadas do motor Python e do banco.
+- **Rastreabilidade:** dados medidos, informados, calculados, estimados e desconhecidos devem ser distinguidos.
+- **Segurança proporcional:** alterações em dados, backup, criptografia, autenticação e sincronização exigem testes e revisão.
+
+## Requisitos
+
+- Python 3.10 ou superior.
+- Windows, macOS ou Linux.
+- Para usar Telegram: conexão com a internet e um bot criado no BotFather.
+- Para transcrição local de voz: dependências opcionais de `requirements-audio.txt`; o modelo é baixado na primeira utilização e executado localmente.
+
+As operações locais básicas não exigem Node.js, banco externo, chave de API ou assinatura de IA.
+
+## Instalação rápida
+
+Na raiz do repositório:
+
+```bash
 python scripts/fitness_manager.py init
 python scripts/fitness_manager.py report
-Default private data directory:
+```
 
-Windows: %USERPROFILE%\.fitness-manager\
-macOS/Linux: ~/.fitness-manager/
-Override with FITNESS_MANAGER_HOME or set FITNESS_MANAGER_DB to a specific local database path. Never point it inside a public Git checkout.
+Consultar o histórico:
 
-Install the Skill into an agent host
-Windows (PowerShell):
-
-.\install.ps1 -ClaudeCode
-.\install.ps1 -Codex
-.\install.ps1 -QwenCode
-.\install.ps1 -Grok
-macOS/Linux:
-
-bash install.sh --claude
-bash install.sh --codex
-bash install.sh --qwen
-bash install.sh --grok
-To install in all supported local targets at once, use -All or --all. The installer backs up an existing Fitness Manager Skill directory before updating it. Host-specific discovery still needs to be verified in the actual installed host. A model provider alone is not a Skill runtime; DeepSeek requires an agent host with filesystem and script access.
-
-Common operations
-Set a private local profile (the values below are synthetic examples; replace them with your own):
-
-python scripts/fitness_manager.py profile set --sex male --age 29 --height-cm 170 --goal fat_loss --goal preserve_muscle --goal running_up_to_15_km
-python scripts/fitness_manager.py profile show
-Record body weight and waist circumference:
-
-python scripts/fitness_manager.py weigh-in --weight 73.4 --date 2026-01-10
-python scripts/fitness_manager.py measure --kind waist --value 84 --unit cm --date 2026-01-10 --method "horizontal at navel"
-Record food, workout, and running events:
-
-python scripts/fitness_manager.py food --meal lunch --food rice --quantity-g 150 --kcal 195 --date 2026-01-10
-python scripts/fitness_manager.py workout --date 2026-01-10 --session A --exercise "Example exercise" --sets 2 --reps 12 --load-kg 10 --rir 3
-python scripts/fitness_manager.py run --date 2026-01-11 --distance-km 3 --duration-min 24 --rpe 4
-The values above are examples only, not recommendations. The running database constraint rejects distances above 15 km, matching the project's stated scope.
-
-View records and summary:
-
+```bash
 python scripts/fitness_manager.py history --limit 50
-python scripts/fitness_manager.py report
-python scripts/fitness_manager.py audit --limit 50
-Telegram data ingestion (no LLM for logging)
-The optional Telegram gateway records measurements, runs, workouts, and food logs without calling an AI model. It uses Telegram long polling, a sender allowlist, deterministic parsing, SQLite idempotency, and explicit confirmation before creating health records. See docs/integrations/TELEGRAM.md.
+```
 
-Configure these environment variables locally (never commit real values), or run interactively to enter the bot token through a hidden prompt:
+Ver todos os comandos disponíveis:
 
-FITNESS_MANAGER_TELEGRAM_BOT_TOKEN
-FITNESS_MANAGER_TELEGRAM_ALLOWED_USER_ID
-Start the gateway:
+```bash
+python scripts/fitness_manager.py --help
+```
 
+### Instalar a Agent Skill
+
+O ponto de entrada portátil é o `SKILL.md` da raiz. Use as instruções específicas em `adapters/` para Claude Code, Codex, Qwen Code e outros hosts compatíveis.
+
+- `SKILL.md`: entrada reconhecida pelos hosts compatíveis.
+- `MODULE.md`: convenção intencional para módulos internos de governança; esses arquivos são carregados explicitamente e não são Skills auto-descobertas.
+
+Um modelo de IA isolado não é, por si só, um host de Skills. É necessário um ambiente com acesso aos arquivos e, para executar o motor local, capacidade de rodar Python.
+
+## Registros sem IA
+
+Os exemplos abaixo usam dados fictícios:
+
+```bash
+python scripts/fitness_manager.py weigh-in --weight 73.4
+python scripts/fitness_manager.py measure --kind waist --value 84 --unit cm --method "horizontal at navel"
+python scripts/fitness_manager.py food --meal lunch --food rice --quantity-g 150
+python scripts/fitness_manager.py workout --session A --exercise "Supino reto" --sets 3 --reps 12 --load-kg 20
+python scripts/fitness_manager.py run --distance-km 4 --duration-min 30
+```
+
+Os valores nutricionais não são inventados: calorias e macronutrientes permanecem desconhecidos se não forem fornecidos ou consultados em uma fonte de composição confiável.
+
+## Telegram: registro por mensagem
+
+O gateway aceita comandos estruturados e algumas frases comuns em português. Exemplos fictícios:
+
+```text
+peso 72 quilos.
+minha cintura é 84 centímetros
+corri 4 quilômetros em 30 minutos
+fiz uma corrida de quatro quilômetros em trinta minutos
+fiz supino reto, três séries de doze repetições com vinte quilos.
+```
+
+O parser normaliza acentos e pontuação periférica, reconhece números por extenso em campos numéricos e preserva o nome original do exercício. Mensagens não reconhecidas ou ambíguas não são gravadas como dados de saúde.
+
+Configure localmente `FITNESS_MANAGER_TELEGRAM_BOT_TOKEN` e `FITNESS_MANAGER_TELEGRAM_ALLOWED_USER_ID`. Nunca publique esses valores.
+
+Inicie o gateway:
+
+```bash
 python scripts/telegram_gateway.py
-Supported examples: /peso 111,4, /cintura 108, /corrida 4;42, /treino A;Supino reto;3;12;20, /alimento almoco;arroz;150, /confirmar ID, /cancelar ID. Use python scripts/telegram_whoami.py after sending /start to the bot to identify your numeric sender ID. Stop the gateway while running this helper because Telegram long polling permits only one active update consumer. Unsupported or ambiguous messages are not written as health records. Food calories/macros remain empty unless explicitly provided.
+```
 
-The /perguntar command is optional and only works after configuring a local OpenAI-compatible endpoint using FITNESS_MANAGER_LOCAL_LLM_URL and FITNESS_MANAGER_LOCAL_LLM_MODEL. The initial adapter accepts loopback hosts only and does not fall back to cloud APIs. See docs/integrations/DATA-INGESTION.md.
+O bot apresenta uma prévia e exige confirmação explícita antes de persistir. Telegram precisa de internet para transportar mensagens, mas o parsing e a gravação são locais e não consomem tokens de LLM.
 
-Backups and restore
-Create a local SQLite online backup and verify its manifest and database integrity:
+### Transcrição local de áudio
 
+Instale as dependências opcionais:
+
+```bash
+pip install -r requirements-audio.txt
+```
+
+O primeiro uso baixa os pesos do modelo selecionado. Depois da instalação/cache, a transcrição ocorre localmente. O áudio temporário é removido após o processamento. A transcrição e a interpretação precisam ser confirmadas antes de salvar.
+
+## Backup e restauração
+
+Criar backup local:
+
+```bash
 python scripts/fitness_manager.py backup
-Local backups are stored in ~/.fitness-manager/backups/ (or the configured app directory), with a default retention of 30 snapshots. Local backups are not application-level encrypted; use full-disk encryption and OS account controls.
+```
 
-For an encrypted Google Drive desktop-sync copy, install the optional dependency:
+Restaurar um backup:
 
-pip install -r requirements-backup-encryption.txt
-Configure an existing local Google Drive sync folder and set the passphrase in the process environment (never in source control or config.json):
+```bash
+python scripts/fitness_manager.py restore --from "CAMINHO_DO_BACKUP.sqlite"
+```
 
-python scripts/fitness_manager.py configure-drive --path "PATH_TO_GOOGLE_DRIVE_SYNC_FOLDER"
-Set FITNESS_MANAGER_BACKUP_PASSPHRASE in the local shell/OS secret manager, then run backup again. The cloud copy is encrypted with AES-256-GCM and a key derived using Scrypt; the passphrase must contain at least 12 characters. If encryption is unavailable or the passphrase is absent, cloud backup is blocked. The command cannot prove that Google Drive has completed remote synchronization; verify that separately in the Drive client. Loss of the passphrase makes encrypted backups unrecoverable.
+O banco pessoal fica em `~/.fitness-manager/` (ou no caminho definido por `FITNESS_MANAGER_HOME` / `FITNESS_MANAGER_DB`). Não coloque banco, perfil, backups, tokens ou arquivos privados no Git.
 
-Restore a verified backup:
+Para sincronizar cópias com uma pasta do Google Drive, use a criptografia AES-256-GCM e configure `FITNESS_MANAGER_BACKUP_PASSPHRASE` no ambiente local. O sistema bloqueia cópia em nuvem sem criptografia configurada. SHA-256 detecta corrupção acidental; não é assinatura digital nem proteção contra administrador local malicioso.
 
-python scripts/fitness_manager.py restore --from "PATH_TO_BACKUP.sqlite"
-Encrypted .sqlite.enc backups require the same FITNESS_MANAGER_BACKUP_PASSPHRASE. Restore validates the manifest/checksum, authenticates encrypted content where applicable, checks SQLite integrity, and creates a pre-restore safety copy before replacing the active database.
+## Estrutura do repositório
 
-Repository map
-SKILL.md: portable entry point for compatible Agent Skills hosts.
-agents/: specialist role instructions; not standalone running agents.
-workflows/: bounded task procedures, including optional UI/UX design review.
-fitness_manager/: modular Python data and storage implementation.
-scripts/: stable CLI entry point and release-hygiene audit.
-tests/: automated tests using synthetic data.
-.github/workflows/ci.yml: automated test and hygiene checks.
-governance/: project-authored MODULE.md governance contracts.
-adapters/: host-specific installation notes.
-references/: source provenance and optional development-tool integrations.
-course-library/: instructions for keeping private course files locally.
-templates/: blank tracker workbook without personal measurements.
-docs/: product, architecture, security, design brief, and handoff documentation.
-UI/UX Pro Max (optional development tool)
-The project documents an optional integration with UI/UX Pro Max for PWA/mobile interface work. It is not installed automatically and is not needed for CLI, SQLite, nutrition, training, or running records. See references/UI_UX_PRO_MAX.md for scope and installation notes. The upstream project currently states an MIT license; verify the current license and notices before installing or redistributing any upstream files.
+```text
+Fitness-Manager/
+├── .github/workflows/       # CI
+├── agents/                  # instruções especializadas
+├── adapters/                # instalação por host
+├── docs/                    # PRD, arquitetura, segurança e handoff
+├── fitness_manager/         # motor Python e SQLite
+├── governance/              # módulos internos MODULE.md
+├── references/              # proveniência e referências
+├── scripts/                 # CLI, gateway e auditoria
+├── tests/                   # testes automatizados
+├── workflows/               # procedimentos delimitados
+├── SKILL.md                 # entrada portátil
+└── VERSION
+```
 
-Course materials and third-party references
-The public repository intentionally excludes private Leandro Twin course PDFs, spreadsheets, exercise tables, extracted course text, and video mappings. Keep lawfully obtained personal copies in a private local directory. Do not redistribute course materials without permission from the rights holder.
+## Testes e auditoria
 
-Humanizer and Claude-BugHunter are methodological references only; their code and payloads are not bundled. See references/THIRD_PARTY_INSPIRATION.md. The MYK SPEC project remains separate at https://github.com/Mayerikson/Spec; this repository includes only a governance bridge.
-
-Development and tests
+```bash
 python -m unittest discover -s tests -v
 python scripts/audit_release.py .
 python scripts/fitness_manager.py --help
-CI runs on Python 3.10–3.13. The release audit checks repository hygiene and documentation paths; it is not SAST, dependency scanning, penetration testing, or a security certification. See CONTRIBUTING.md, SECURITY.md, and docs/HANDOFF.md.
+```
 
-License status
-No open-source license has been selected yet. Public visibility does not grant permission to reuse, modify, or redistribute the project's code. See LICENSE-STATUS.md.
+O CI está configurado para Python 3.10–3.13. A aprovação local não substitui a execução do workflow remoto após o push.
+
+## UX: três telas principais, não dezenas
+
+A direção de experiência do usuário é responder a três perguntas:
+
+1. **O que faço hoje?** — tela Hoje, com treino planejado, refeições, follow-ups e ações rápidas.
+2. **Como executo e registro?** — modo Academia, com exercício atual, vídeo verificado, séries, cargas, substituições e entrada por texto/voz com confirmação.
+3. **Estou evoluindo?** — dashboard com peso, cintura, adesão, força, corridas e tendências.
+
+Essa é uma proposta de UX para o futuro PWA, não uma interface já implementada. Consulte `docs/UX-MVP.md`.
+
+## Privacidade e segurança
+
+- O repositório público não deve conter dados pessoais, SQLite, backups, tokens, `.env`, arquivos de áudio ou materiais proprietários de cursos.
+- Mensagens do Telegram passam pela infraestrutura do Telegram; o processamento local não torna o transporte privado de ponta a ponta.
+- O sistema não é dispositivo médico e não substitui profissionais de saúde.
+- Consulte `SECURITY.md` e `docs/SECURITY-MODEL.md`.
+
+## Materiais de terceiros e licença
+
+Materiais privados do curso Leandro Twin não são distribuídos neste repositório. O catálogo privado de exercícios e os mapeamentos de vídeos devem permanecer fora do repositório público, salvo autorização expressa dos titulares.
+
+O projeto ainda não selecionou uma licença open source. Consulte `LICENSE-STATUS.md`. A visibilidade pública do GitHub não concede automaticamente direitos de reutilização.
+
+## Roadmap
+
+1. Estabilizar parser, Telegram, persistência, testes e CI.
+2. Construir PWA mobile-first com as três telas essenciais.
+3. Adicionar modo academia e biblioteca de mídia verificada.
+4. Validar com usuários beta e medir adesão/usabilidade.
+5. Avaliar sincronização multiusuário e monetização somente após validação.
+
+**Fitness Manager — sua evolução, documentada e orientada por dados.**
+
+
+### UX especificada nesta versão
+
+A especificação inclui uma tela contextual de conclusão do treino, com duração baseada em registros, distinção entre exercícios concluídos/parciais/não realizados, substituições e compartilhamento opcional com dados sensíveis ocultos por padrão. O PWA ainda não foi implementado.
